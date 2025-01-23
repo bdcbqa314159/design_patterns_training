@@ -1,0 +1,3 @@
+project(creational_patterns)
+
+add_subdirectory(factory_pattern)
