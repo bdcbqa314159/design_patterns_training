@@ -2,3 +2,4 @@ project(creational_patterns)
 
 add_subdirectory(factory_pattern)
 add_subdirectory(prototype_pattern)
+add_subdirectory(abstract_factory_pattern)
