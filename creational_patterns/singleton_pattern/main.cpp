@@ -1,162 +1,82 @@
 #include <iostream>
+#include <memory>
+#include <thread>
 
-class Headphones
+class MeyerSingleton
 {
 
 public:
-    std::string label = "headphones";
-    Headphones() = default;
-    virtual ~Headphones() {}
-
-    virtual void print(std::ostream &os) const = 0;
-    friend std::ostream &operator<<(std::ostream &os, const Headphones &obj)
+    static MeyerSingleton &createInstance(std::string value)
     {
-        obj.print(os);
-        return os;
+        static MeyerSingleton instance(value);
+        return instance;
     }
+
+    std::string getValue() const
+    {
+        return value;
+    }
+
+private:
+    std::string value;
+    MeyerSingleton() = default;
+    ~MeyerSingleton() {}
+    MeyerSingleton(std::string value) : value(value) {}
+
+    MeyerSingleton(const MeyerSingleton &other) = delete;
+    MeyerSingleton &operator=(const MeyerSingleton &other) = delete;
 };
 
-class AppleHeadphones : public Headphones
+void threadFoo()
 {
-public:
-    std::string brand = "apple";
-    AppleHeadphones() = default;
-    virtual ~AppleHeadphones() {}
-
-    virtual void print(std::ostream &os) const override
-    {
-        os << label << " [brand]: " << brand;
-    }
-};
-
-class SamsungHeadphones : public Headphones
-{
-public:
-    std::string brand = "samsung";
-    SamsungHeadphones() = default;
-    virtual ~SamsungHeadphones() {}
-
-    virtual void print(std::ostream &os) const override
-    {
-        os << label << " [brand]: " << brand;
-    }
-};
-
-class Phone
-{
-public:
-    std::string label = "phone";
-    Phone() = default;
-    virtual ~Phone() {}
-
-    virtual void print(std::ostream &os) const = 0;
-    virtual void connecting(std::unique_ptr<Headphones> &headphones) const = 0;
-
-    friend std::ostream &operator<<(std::ostream &os, const Phone &obj)
-    {
-        obj.print(os);
-        return os;
-    }
-};
-
-class ApplePhone : public Phone
-{
-public:
-    std::string brand = "apple";
-    ApplePhone() = default;
-    virtual ~ApplePhone() {}
-
-    virtual void print(std::ostream &os) const override
-    {
-        os << label << " [brand]: " << brand;
-    }
-
-    virtual void connecting(std::unique_ptr<Headphones> &headphones) const override
-    {
-        std::cout << "this:" << "\n";
-        std::cout << *this << "\nconnected to:\n";
-        std::cout << *headphones << "\n";
-    }
-};
-
-class SamsungPhone : public Phone
-{
-public:
-    std::string brand = "samsung";
-    SamsungPhone() = default;
-    virtual ~SamsungPhone() {}
-
-    virtual void print(std::ostream &os) const override
-    {
-        os << label << " [brand]: " << brand;
-    }
-
-    virtual void connecting(std::unique_ptr<Headphones> &headphones) const override
-    {
-        std::cout << "this:" << "\n";
-        std::cout << *this << "\nconnected to:\n";
-        std::cout << *headphones << "\n";
-    }
-};
-
-class AbstractFactory
-{
-public:
-    virtual ~AbstractFactory() {}
-    virtual std::unique_ptr<Headphones> createHeadphones() const = 0;
-    virtual std::unique_ptr<Phone> createPhone() const = 0;
-};
-
-class AppleFactory : public AbstractFactory
-{
-public:
-    virtual ~AppleFactory() {}
-    virtual std::unique_ptr<Headphones> createHeadphones() const override
-    {
-        return std::make_unique<AppleHeadphones>();
-    }
-    virtual std::unique_ptr<Phone> createPhone() const override
-    {
-        return std::make_unique<ApplePhone>();
-    }
-};
-
-class SamsungFactory : public AbstractFactory
-{
-public:
-    virtual ~SamsungFactory() {}
-    virtual std::unique_ptr<Headphones> createHeadphones() const override
-    {
-        return std::make_unique<SamsungHeadphones>();
-    }
-    virtual std::unique_ptr<Phone> createPhone() const override
-    {
-        return std::make_unique<SamsungPhone>();
-    }
-};
-
-void clientCode(std::unique_ptr<AbstractFactory> &factory)
-{
-    std::unique_ptr<Headphones> headphones;
-    std::unique_ptr<Phone> phone;
-
-    headphones = factory->createHeadphones();
-    phone = factory->createPhone();
-
-    phone->connecting(headphones);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    MeyerSingleton &s1 = MeyerSingleton::createInstance("FOO");
+    std::cout << s1.getValue() << "\n";
 }
+
+void threadBar()
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    MeyerSingleton &s1 = MeyerSingleton::createInstance("BAR");
+    std::cout << s1.getValue() << "\n";
+}
+
+class Singleton
+{
+private:
+    static std::shared_ptr<Singleton> instance;
+    static std::mutex singleton;
+    std::string value;
+
+    Singleton() = default;
+    Singleton(std::string value) : value(value) {}
+
+public:
+    static std::shared_ptr<Singleton> getInstance(std::string name)
+    {
+        std::lock_guard<std::mutex> lock(singleton);
+        if (instance == nullptr)
+            instance = std::shared_ptr<Singleton>(new Singleton(name));
+        return instance;
+    }
+
+    std::string getValue() const
+    {
+        return value;
+    }
+};
+
+std::shared_ptr<Singleton> Singleton::instance = nullptr;
+std::mutex Singleton::singleton;
 
 int main()
 {
-    std::cout << "working with abstract factory pattern...\n";
+    std::cout << "working with singleton pattern...\n";
+    std::thread t1(threadFoo);
+    std::thread t2(threadBar);
 
-    std::unique_ptr<AbstractFactory> myFactory = std::make_unique<SamsungFactory>();
-
-    clientCode(myFactory);
-
-    myFactory = std::make_unique<AppleFactory>();
-
-    clientCode(myFactory);
+    t1.join();
+    t2.join();
 
     return 0;
 }
