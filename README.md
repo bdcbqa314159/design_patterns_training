@@ -17,5 +17,6 @@ Mainly ressource is internet for some examples, the refactoring guru and the fam
 ### Structural Patterns
 
 - Adapter
+- Bridge
   
 ### Behavioral Patterns
