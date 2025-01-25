@@ -41,34 +41,6 @@ void threadBar()
     std::cout << s1.getValue() << "\n";
 }
 
-class Singleton
-{
-private:
-    static std::shared_ptr<Singleton> instance;
-    static std::mutex singleton;
-    std::string value;
-
-    Singleton() = default;
-    Singleton(std::string value) : value(value) {}
-
-public:
-    static std::shared_ptr<Singleton> getInstance(std::string name)
-    {
-        std::lock_guard<std::mutex> lock(singleton);
-        if (instance == nullptr)
-            instance = std::shared_ptr<Singleton>(new Singleton(name));
-        return instance;
-    }
-
-    std::string getValue() const
-    {
-        return value;
-    }
-};
-
-std::shared_ptr<Singleton> Singleton::instance = nullptr;
-std::mutex Singleton::singleton;
-
 int main()
 {
     std::cout << "working with singleton pattern...\n";
