@@ -1,3 +1,3 @@
-project(beahavioral_patterns)
+project(behavioral_patterns)
 
-add_subdirectory(factory_pattern)
+add_subdirectory(adapter_pattern)
