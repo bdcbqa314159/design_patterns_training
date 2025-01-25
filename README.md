@@ -14,4 +14,8 @@ Mainly ressource is internet for some examples, the refactoring guru and the fam
 - Builder
 - Singleton
 
+### Structural Patterns
+
+- Adapter
+  
 ### Behavioral Patterns
