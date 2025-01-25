@@ -1,66 +1,123 @@
 #include <iostream>
 
-class ClientCode
+class HTMLElement
 {
 public:
-    ClientCode() = default;
-    virtual ~ClientCode() = default;
-
-    virtual std::string Request() const
-    {
-        return "Benchmark code";
-    }
+    virtual ~HTMLElement() = default;
+    virtual void render() const = 0;
+    virtual void changeTag(const std::string &tag) = 0;
+    virtual std::string giveTag() const = 0;
+    virtual void add(std::unique_ptr<HTMLElement> &toBeAdded) = 0;
+    virtual std::unique_ptr<HTMLElement> clone() const = 0;
 };
 
-class ExternalCode
+class SimpleElement : public HTMLElement
 {
 public:
-    ExternalCode() = default;
-    ~ExternalCode() = default;
+    std::string tagName;
+    SimpleElement() = default;
+    SimpleElement(const std::string &tag) : tagName(tag) {}
 
-    std::string CustomRequest()
+    virtual void changeTag(const std::string &tag) override
     {
-        return "3rdParty library result";
+        tagName = tag;
     }
+
+    virtual std::string giveTag() const override
+    {
+        return tagName;
+    }
+
+    virtual void render() const override
+    {
+        std::cout << "<" << tagName << "></" << tagName << ">\n";
+    }
+
+    virtual std::unique_ptr<HTMLElement> clone() const override
+    {
+        return std::make_unique<SimpleElement>(*this);
+    }
+
+    virtual void add(std::unique_ptr<HTMLElement> &toBeAdded) override {}
+
+    virtual ~SimpleElement() = default;
 };
 
-class Adapter : public ClientCode
+class CompositeElement : public HTMLElement
 {
 public:
-    std::unique_ptr<ExternalCode> external;
+    std::string tagName;
+    std::vector<std::unique_ptr<HTMLElement>> children;
 
-    Adapter() = default;
-    Adapter(std::unique_ptr<ExternalCode> &externalCode)
+    CompositeElement() = default;
+    CompositeElement(std::string tag) : tagName(tag) {}
+
+    virtual std::string giveTag() const override
     {
-        external = std::make_unique<ExternalCode>(*externalCode);
+        return tagName;
     }
 
-    virtual std::string Request() const override
+    virtual void changeTag(const std::string &tag) override
     {
-        std::string fromExternal = external->CustomRequest();
-        return "this is an adapter from: " + fromExternal;
+        tagName = tag;
+
+        for (const auto &child : children)
+        {
+            std::string old = child->giveTag();
+            child->changeTag("changed" + old);
+        }
+    }
+
+    virtual void add(std::unique_ptr<HTMLElement> &toBeAdded) override
+    {
+        children.push_back(toBeAdded->clone());
+    }
+
+    virtual void render() const override
+    {
+        std::cout << "<" << tagName << ">\n";
+        for (const auto &child : children)
+            child->render();
+
+        std::cout << "</" << tagName << ">\n";
+    }
+
+    virtual std::unique_ptr<HTMLElement> clone() const override
+    {
+        std::unique_ptr<CompositeElement> copy = std::make_unique<CompositeElement>(this->tagName);
+        for (const auto &child : this->children)
+        {
+            copy->children.push_back(child->clone());
+        }
+        return copy;
     }
 };
-
-void clientExecution(std::unique_ptr<ClientCode> &target)
-{
-    std::cout << "=== From client execution ===\n";
-    std::cout << target->Request() << "\n";
-}
 
 int main()
 {
-    std::cout << "Regular work:\n";
-    std::unique_ptr<ClientCode> myCode = std::make_unique<ClientCode>();
+    std::unique_ptr<HTMLElement> div = std::make_unique<CompositeElement>("div");
+    std::unique_ptr<HTMLElement> p = std::make_unique<SimpleElement>("p");
+    std::unique_ptr<HTMLElement> button = std::make_unique<SimpleElement>("button");
 
-    clientExecution(myCode);
+    div->add(p);
+    div->add(button);
 
-    myCode = std::make_unique<Adapter>();
-    clientExecution(myCode);
+    p->changeTag("pp");
+    button->changeTag("bb");
 
-    std::cout << "== wrong usage of the library - it breaks the flow ==\n";
-    std::unique_ptr<ExternalCode> externalCode = std::make_unique<ExternalCode>();
-    std::cout << externalCode->CustomRequest() << "\n";
+    div->render();
+
+    std::cout << "================\n";
+
+    std::unique_ptr<HTMLElement> div1 = div->clone();
+    div1->changeTag("newDiv");
+
+    div1->render();
+
+    std::cout << "================\n";
+
+    div->add(div);
+    div->render();
 
     return 0;
 }
