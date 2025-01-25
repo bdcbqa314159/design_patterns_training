@@ -12,3 +12,4 @@ Mainly ressource is internet for some examples, the refactoring guru and the fam
 - Prototype
 - Abstract Factory
 - Builder
+- Singleton
