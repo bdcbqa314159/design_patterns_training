@@ -1,84 +1,66 @@
 #include <iostream>
 
-class Foo
+class ClientCode
 {
-
 public:
-    int id{};
-    Foo() = default;
-    Foo(int id) : id(id) {}
+    ClientCode() = default;
+    virtual ~ClientCode() = default;
 
-    void printMe(std::ostream &os) const
+    virtual std::string Request() const
     {
-        os << "foo - id: " << id;
-    }
-
-    friend std::ostream &operator<<(std::ostream &os, const Foo &obj)
-    {
-        obj.printMe(os);
-        return os;
-    }
-
-    std::unique_ptr<Foo> clone()
-    {
-        return std::make_unique<Foo>(*this);
+        return "Benchmark code";
     }
 };
 
-class Bar
+class ExternalCode
 {
 public:
-    std::unique_ptr<Foo> myFoo = std::make_unique<Foo>();
-    std::string name;
+    ExternalCode() = default;
+    ~ExternalCode() = default;
 
-    Bar() = default;
-
-    Bar(const std::string &name, std::unique_ptr<Foo> &foo) : name(name)
+    std::string CustomRequest()
     {
-        myFoo = foo->clone();
-    }
-
-    Bar(const Bar &other) : name(other.name)
-    {
-        myFoo = other.myFoo->clone();
-    }
-
-    void printMe(std::ostream &os) const
-    {
-        os << "bar - name: " << name << "\n";
-        os << "with foo: " << *myFoo;
-    }
-
-    friend std::ostream &operator<<(std::ostream &os, const Bar &obj)
-    {
-        obj.printMe(os);
-        return os;
+        return "3rdParty library result";
     }
 };
+
+class Adapter : public ClientCode
+{
+public:
+    std::unique_ptr<ExternalCode> external;
+
+    Adapter() = default;
+    Adapter(std::unique_ptr<ExternalCode> &externalCode)
+    {
+        external = std::make_unique<ExternalCode>(*externalCode);
+    }
+
+    virtual std::string Request() const override
+    {
+        std::string fromExternal = external->CustomRequest();
+        return "this is an adapter from: " + fromExternal;
+    }
+};
+
+void clientExecution(std::unique_ptr<ClientCode> &target)
+{
+    std::cout << "=== From client execution ===\n";
+    std::cout << target->Request() << "\n";
+}
 
 int main()
 {
-    std::cout << "hello...\n";
+    std::cout << "Regular work:\n";
+    std::unique_ptr<ClientCode> myCode = std::make_unique<ClientCode>();
 
-    Foo me(4);
-    std::cout << "test: " << me << "\n";
+    clientExecution(myCode);
 
-    std::unique_ptr<Foo> newMe = me.clone();
-    std::cout << *newMe << "\n";
+    myCode = std::make_unique<Adapter>();
+    clientExecution(myCode);
 
-    Bar bar;
-    std::string name = "myName";
-
-    Bar anotherBar(name, newMe);
-
-    Bar finalBar(anotherBar);
-
-    std::cout << "finals:\n";
-    std::cout << bar << "\n"
-              << anotherBar
-              << "\n"
-              << finalBar
-              << "\n";
+    std::cout << "== wrong usage of the library - it breaks the flow ==\n";
+    std::unique_ptr<ExternalCode> externalCode = std::make_unique<ExternalCode>();
+    std::cout << externalCode->CustomRequest() << "\n";
 
     return 0;
 }
