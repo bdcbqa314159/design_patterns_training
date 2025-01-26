@@ -1,87 +1,162 @@
 #include <iostream>
 
-class FontStyle
+struct Result
 {
+    int value = 0;
+    std::string name;
+    Result() = default;
+    Result(int value, std::string name) : value(value), name(name) {}
+};
+
+class Database
+{
+
 public:
-    std::string font, color;
-    int size = 0;
+    std::unordered_map<std::string, int> accounts;
 
-    FontStyle() = default;
-    FontStyle(const std::string &newFont, const std::string &newColor, int newSize) : font(newFont), color(newColor), size(newSize) {}
-
-    std::shared_ptr<FontStyle> clone() const
+    static Database &createInstance()
     {
-        return std::make_shared<FontStyle>(*this);
+        static Database instance;
+        return instance;
     }
 
-    std::string key() const
+    Result request(std::string key)
     {
-        std::string key = font + "_" + color + "_" + std::to_string(size);
-        return key;
+        Result out(0, "not_found");
+        if (accounts.find(key) != accounts.end())
+        {
+            out.name = key;
+            out.value = accounts[key];
+        }
+
+        return out;
+    }
+
+    void insert(const Result &result)
+    {
+        accounts[result.name] = result.value;
+    }
+
+private:
+    Database() = default;
+    ~Database() {}
+
+    Database(const Database &other) = delete;
+    Database &operator=(const Database &other) = delete;
+};
+
+class Request
+{
+
+public:
+    Request() = default;
+    virtual ~Request() = default;
+    virtual void identify(std::string bearer) = 0;
+    virtual Result ask(Database &db, std::string key) const = 0;
+    virtual void change(Database &db, std::string key, int value) const = 0;
+
+    virtual std::unique_ptr<Request> clone() const = 0;
+};
+
+class RealRequest : public Request
+{
+public:
+    RealRequest() = default;
+
+    virtual void identify(std::string bearer) override
+    {
+    }
+
+    virtual Result ask(Database &db, std::string key) const override
+    {
+        return db.request(key);
+    }
+
+    virtual void change(Database &db, std::string key, int value) const override
+    {
+        Result temp(value, key);
+        db.insert(temp);
+    }
+
+    virtual std::unique_ptr<Request> clone() const override
+    {
+        return std::make_unique<RealRequest>(*this);
     }
 };
 
-class StyleFactory
+class Proxy : public Request
 {
 public:
-    std::unordered_map<std::string, std::shared_ptr<FontStyle>> styles;
-    StyleFactory() = default;
+    std::string bearer = "123abc";
+    std::unique_ptr<Request> realReq;
+    bool access = false;
 
-    std::shared_ptr<FontStyle> getStyle(const std::string &font, const std::string &color, int size)
+    Proxy() = default;
+    Proxy(std::unique_ptr<Request> &newRealReq)
     {
-        std::string key = font + "_" + color + "_" + std::to_string(size);
-
-        if (styles.find(key) == styles.end())
-        {
-            std::cout << "style: " << key << " not present, building it ...\n";
-            styles[key] = std::make_shared<FontStyle>(font, color, size);
-        }
-
-        return styles[key];
+        this->realReq = newRealReq->clone();
     }
 
-    std::shared_ptr<FontStyle> getStyle(std::shared_ptr<FontStyle> aStyle)
+    virtual void identify(std::string bearer) override
     {
-        std::string key = aStyle->key();
+        if (this->bearer == bearer)
+            access = true;
+    }
 
-        if (styles.find(key) == styles.end())
+    virtual Result ask(Database &db, std::string key) const override
+    {
+        if (access)
+            return db.request(key);
+        else
         {
-            std::cout << "style: " << key << " not present, building it ...\n";
-            styles[key] = aStyle;
+            std::cout << "You don't have access to the db.\n";
+            Result out;
+            return out;
+        }
+    }
+
+    virtual void change(Database &db, std::string key, int value) const override
+    {
+        if (access)
+        {
+            Result temp(value, key);
+            db.insert(temp);
         }
 
-        return styles[key];
+        else
+        {
+            std::cout << "You don't have access to the db.\n";
+        }
     }
-};
 
-class Character
-{
-public:
-    char symbol = 0;
-    std::shared_ptr<FontStyle> style;
-
-    Character() = default;
-    Character(char newSymbol, std::shared_ptr<FontStyle> sharedStyle) : symbol(newSymbol), style(sharedStyle) {}
+    virtual std::unique_ptr<Request> clone() const override
+    {
+        std::unique_ptr<Proxy> out = std::make_unique<Proxy>();
+        out->realReq = this->realReq->clone();
+        return out;
+    }
 };
 
 int main()
 {
+    Result one(12, "Alex"), two(23, "Anton"), three(100, "Claudio");
+    Database &db = Database::createInstance();
+    db.insert(one);
+    db.insert(two);
+    db.insert(three);
 
-    FontStyle first_fs("arial", "red", 1);
-    FontStyle second_fs("times", "black", 2);
+    std::unique_ptr<Request> myReq = std::make_unique<RealRequest>();
+    auto res = myReq->ask(db, "Anton");
+    std::cout << res.name << " : " << res.value << "\n";
 
-    std::shared_ptr<FontStyle> first = std::make_shared<FontStyle>("arial", "red", 1);
-    std::shared_ptr<FontStyle> second = std::make_shared<FontStyle>("times", "black", 2);
+    myReq = std::make_unique<Proxy>(myReq);
 
-    StyleFactory factory;
-    std::shared_ptr<FontStyle> p1 = factory.getStyle(first);
-    std::shared_ptr<FontStyle> p2 = factory.getStyle(second);
-    std::shared_ptr<FontStyle> p3 = factory.getStyle("bold", "yellow", 12);
+    res = myReq->ask(db, "Anton");
+    std::cout << res.name << " : " << res.value << "\n";
 
-    Character a('a', p1);
-    Character b('b', p2);
-
-    first->font = "office";
+    myReq->identify("123abc");
+    res = myReq->ask(db, "Anton");
+    std::cout << res.name << " : " << res.value << "\n";
 
     return 0;
 }
