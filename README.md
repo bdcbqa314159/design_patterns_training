@@ -20,5 +20,6 @@ Mainly ressource is internet for some examples, the refactoring guru and the fam
 - Bridge
 - Composite
 - Decorator
+- Facade
   
 ### Behavioral Patterns
