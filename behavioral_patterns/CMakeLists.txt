@@ -1,1 +1,3 @@
 project(behavioral_patterns)
+
+add_subdirectory(chain_of_responsibility_pattern)

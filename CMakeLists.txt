@@ -9,3 +9,4 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(creational_patterns)
 add_subdirectory(structural_patterns)
+add_subdirectory(behavioral_patterns)
