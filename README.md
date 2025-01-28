@@ -25,3 +25,5 @@ Mainly ressource is internet for some examples, the refactoring guru and the fam
 - Proxy
   
 ### Behavioral Patterns
+
+- Chain of Responsibility
