@@ -2,3 +2,4 @@ project(behavioral_patterns)
 
 add_subdirectory(chain_of_responsibility_pattern)
 add_subdirectory(command_pattern)
+add_subdirectory(iterator_pattern)
