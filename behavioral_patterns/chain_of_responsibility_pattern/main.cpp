@@ -108,19 +108,6 @@ public:
     }
 };
 
-class Node
-{
-public:
-    int data;
-    std::unique_ptr<Node> next;
-
-    Node() = default;
-    virtual ~Node() = default;
-    Node(int data) : data(data) {}
-    Node(int data, std::unique_ptr<Node> next) : data(data), next(std::move(next)) {}
-    virtual std::unique_ptr<Node> clone() const = 0;
-};
-
 class EmployeeCOR
 {
 public:
