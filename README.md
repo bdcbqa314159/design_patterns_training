@@ -29,3 +29,4 @@ Mainly ressource is internet for some examples, the refactoring guru and the fam
 - Chain of Responsibility
 - Command
 - Iterator
+- Mediator
