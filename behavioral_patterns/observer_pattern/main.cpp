@@ -73,23 +73,25 @@ public:
 
 int main()
 {
-    std::shared_ptr<News> chat = std::make_shared<News>();
-    // std::shared_ptr<Reader> a = std::make_shared<Reader>("123+");
-    // std::shared_ptr<Reader> b = std::make_shared<Reader>("89%^");
+    std::shared_ptr<News> journal = std::make_shared<News>();
+    std::shared_ptr<Reader> a = std::make_shared<Reader>("123+");
+    std::shared_ptr<Reader> b = std::make_shared<Reader>("89%^");
 
-    // std::shared_ptr<Reader> c = std::make_shared<Reader>("valide_checked");
+    std::shared_ptr<Reader> c = std::make_shared<Reader>("valide_checked");
 
-    // chat->subscribe(a);
-    // chat->subscribe(b);
-    // chat->subscribe(c);
+    journal->subscribe(a);
+    journal->subscribe(b);
+    journal->subscribe(c);
 
-    // chat->update_scoop("trump est president");
+    journal->update_scoop("a car just passed by");
 
-    // chat->notify();
-    // chat->unsubscribe("123+");
+    journal->notify();
+    a->unsubscribe();
 
-    // std::shared_ptr<Reader> d = std::make_shared<Reader>("we are happy");
+    std::shared_ptr<Reader> d = std::make_shared<Reader>("toto1");
+    journal->subscribe(d);
+    journal->update_scoop("the life is great");
+    journal->notify();
 
-    // chat->notify();
     return 0;
 }
