@@ -31,3 +31,4 @@ Mainly ressource is internet for some examples, the refactoring guru and the fam
 - Iterator
 - Mediator
 - Memento
+- Observer
