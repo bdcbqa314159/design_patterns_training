@@ -2,7 +2,7 @@
 
 This tiny repository reflects my work done and my understanding of Design Patterns within C++.
 
-Mainly ressource is internet for some examples, the refactoring guru and the famous livre of GoF.
+Mainly ressources are [the refactoring guru](https://refactoring.guru/) and [the famous book from the GoF.](https://www.amazon.co.uk/Design-patterns-elements-reusable-object-oriented/dp/0201633612)
 
 ## Road Map of Work
 
