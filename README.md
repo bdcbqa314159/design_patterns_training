@@ -35,3 +35,4 @@ Mainly ressource is internet for some examples, the refactoring guru and the fam
 - State
 - Strategy
 - Template Method
+- Visitor
